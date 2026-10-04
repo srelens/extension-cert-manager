@@ -1,0 +1,426 @@
+{
+  "$schema": "https://raw.githubusercontent.com/srelens/srelens/main/schemas/extension-manifest.v0.7.json",
+  "id": "org.srelens.cert-manager",
+  "name": "cert-manager",
+  "version": "0.1.0",
+  "srelensApiVersion": "^0.7",
+  "kind": "declarative",
+  "permissions": [
+    "k8s.listCustomResource",
+    "k8s.setStatusCondition"
+  ],
+  "capabilities": [
+    {
+      "name": "certificates",
+      "title": "List Certificates",
+      "target": "k8s.listCustomResource",
+      "arguments": {
+        "group": "cert-manager.io",
+        "version": "v1",
+        "plural": "certificates",
+        "kind": "Certificate",
+        "namespaced": true,
+        "printerColumns": [
+          {
+            "name": "Ready",
+            "jsonPath": ".status.conditions[?(@.type==\"Ready\")].status",
+            "type": "string"
+          }
+        ]
+      },
+      "inputs": [
+        "context",
+        "namespace"
+      ]
+    },
+    {
+      "name": "issuers",
+      "title": "List Issuers",
+      "target": "k8s.listCustomResource",
+      "arguments": {
+        "group": "cert-manager.io",
+        "version": "v1",
+        "plural": "issuers",
+        "kind": "Issuer",
+        "namespaced": true,
+        "printerColumns": [
+          {
+            "name": "Ready",
+            "jsonPath": ".status.conditions[?(@.type==\"Ready\")].status",
+            "type": "string"
+          }
+        ]
+      },
+      "inputs": [
+        "context",
+        "namespace"
+      ]
+    },
+    {
+      "name": "clusterissuers",
+      "title": "List ClusterIssuers",
+      "target": "k8s.listCustomResource",
+      "arguments": {
+        "group": "cert-manager.io",
+        "version": "v1",
+        "plural": "clusterissuers",
+        "kind": "ClusterIssuer",
+        "namespaced": false,
+        "printerColumns": [
+          {
+            "name": "Ready",
+            "jsonPath": ".status.conditions[?(@.type==\"Ready\")].status",
+            "type": "string"
+          }
+        ]
+      },
+      "inputs": [
+        "context"
+      ]
+    },
+    {
+      "name": "certificaterequests",
+      "title": "List CertificateRequests",
+      "target": "k8s.listCustomResource",
+      "arguments": {
+        "group": "cert-manager.io",
+        "version": "v1",
+        "plural": "certificaterequests",
+        "kind": "CertificateRequest",
+        "namespaced": true,
+        "printerColumns": [
+          {
+            "name": "Ready",
+            "jsonPath": ".status.conditions[?(@.type==\"Ready\")].status",
+            "type": "string"
+          },
+          {
+            "name": "Issuer",
+            "jsonPath": ".spec.issuerRef.name",
+            "type": "string"
+          }
+        ]
+      },
+      "inputs": [
+        "context",
+        "namespace"
+      ]
+    }
+  ],
+  "settings": [
+    {
+      "id": "expiryWindow",
+      "type": "select",
+      "title": "Warn before expiry",
+      "description": "Count certificates expiring within this window. Already expired certificates are outside it.",
+      "default": "14d",
+      "options": [
+        {
+          "value": "7d",
+          "label": "7 days"
+        },
+        {
+          "value": "14d",
+          "label": "14 days"
+        },
+        {
+          "value": "30d",
+          "label": "30 days"
+        },
+        {
+          "value": "60d",
+          "label": "60 days"
+        },
+        {
+          "value": "90d",
+          "label": "90 days"
+        }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "name": "renew",
+      "title": "Renew",
+      "target": "k8s.setStatusCondition",
+      "resource": "certificates",
+      "arguments": {
+        "conditionType": "Issuing",
+        "conditionStatus": "True",
+        "reason": "ManuallyTriggered",
+        "message": "Certificate re-issuance manually triggered"
+      },
+      "preconditions": [
+        {
+          "jsonPath": ".status.conditions[?(@.type==\"Issuing\")].status",
+          "notEquals": "True",
+          "reason": "This certificate is already being issued"
+        }
+      ],
+      "availableWhen": [
+        {
+          "jsonPath": ".status.conditions[?(@.type==\"Issuing\")].status",
+          "notEquals": "True",
+          "reason": "This certificate is already being issued"
+        }
+      ]
+    }
+  ],
+  "contributions": {
+    "pages": [
+      {
+        "id": "certificates",
+        "title": "Certificates",
+        "capability": "certificates"
+      },
+      {
+        "id": "issuers",
+        "title": "Issuers",
+        "capability": "issuers"
+      },
+      {
+        "id": "clusterissuers",
+        "title": "ClusterIssuers",
+        "capability": "clusterissuers"
+      },
+      {
+        "id": "certificaterequests",
+        "title": "CertificateRequests",
+        "capability": "certificaterequests"
+      }
+    ],
+    "tableColumns": [
+      {
+        "id": "not-after",
+        "title": "Not after",
+        "forKinds": [
+          "cert-manager.io/Certificate"
+        ],
+        "source": {
+          "jsonPath": ".status.notAfter"
+        },
+        "format": "date",
+        "sortable": true
+      },
+      {
+        "id": "issuer",
+        "title": "Issuer",
+        "forKinds": [
+          "cert-manager.io/Certificate"
+        ],
+        "source": {
+          "jsonPath": ".spec.issuerRef.name"
+        },
+        "sortable": true,
+        "format": "text"
+      }
+    ],
+    "detailPanels": [
+      {
+        "id": "certificate",
+        "title": "Certificate",
+        "forKinds": [
+          "cert-manager.io/Certificate"
+        ],
+        "sections": [
+          {
+            "type": "fields",
+            "fields": [
+              {
+                "label": "Not before",
+                "jsonPath": ".status.notBefore",
+                "format": "date"
+              },
+              {
+                "label": "Not after",
+                "jsonPath": ".status.notAfter",
+                "format": "date"
+              },
+              {
+                "label": "Renewal time",
+                "jsonPath": ".status.renewalTime",
+                "format": "date"
+              },
+              {
+                "label": "Issuer",
+                "jsonPath": ".spec.issuerRef.name"
+              },
+              {
+                "label": "Issuer kind",
+                "jsonPath": ".spec.issuerRef.kind"
+              },
+              {
+                "label": "Secret",
+                "jsonPath": ".spec.secretName"
+              },
+              {
+                "label": "Common name",
+                "jsonPath": ".spec.commonName"
+              }
+            ]
+          },
+          {
+            "type": "conditions",
+            "jsonPath": ".status.conditions"
+          }
+        ]
+      }
+    ],
+    "statusResolvers": [
+      {
+        "forKinds": [
+          "cert-manager.io/Certificate"
+        ],
+        "rules": [
+          {
+            "when": [
+              {
+                "jsonPath": ".status.conditions[?(@.type==\"Issuing\")].status",
+                "equals": "True"
+              }
+            ],
+            "status": "progressing",
+            "label": "Issuing",
+            "reason": ".status.conditions[?(@.type==\"Issuing\")].message"
+          },
+          {
+            "when": [
+              {
+                "jsonPath": ".status.conditions[?(@.type==\"Ready\")].status",
+                "equals": "True"
+              }
+            ],
+            "status": "healthy",
+            "label": "Ready",
+            "reason": ".status.conditions[?(@.type==\"Ready\")].message"
+          },
+          {
+            "when": [
+              {
+                "jsonPath": ".status.conditions[?(@.type==\"Ready\")].status",
+                "equals": "False"
+              }
+            ],
+            "status": "warning",
+            "label": "Not ready",
+            "reason": ".status.conditions[?(@.type==\"Ready\")].message"
+          },
+          {
+            "when": [],
+            "status": "unknown",
+            "label": "Unknown"
+          }
+        ]
+      },
+      {
+        "forKinds": [
+          "cert-manager.io/Issuer",
+          "cert-manager.io/ClusterIssuer"
+        ],
+        "rules": [
+          {
+            "when": [
+              {
+                "jsonPath": ".status.conditions[?(@.type==\"Ready\")].status",
+                "equals": "True"
+              }
+            ],
+            "status": "healthy",
+            "label": "Ready",
+            "reason": ".status.conditions[?(@.type==\"Ready\")].message"
+          },
+          {
+            "when": [
+              {
+                "jsonPath": ".status.conditions[?(@.type==\"Ready\")].status",
+                "equals": "False"
+              }
+            ],
+            "status": "error",
+            "label": "Not ready",
+            "reason": ".status.conditions[?(@.type==\"Ready\")].message"
+          },
+          {
+            "when": [],
+            "status": "unknown",
+            "label": "Unknown"
+          }
+        ]
+      },
+      {
+        "forKinds": [
+          "cert-manager.io/CertificateRequest"
+        ],
+        "rules": [
+          {
+            "when": [
+              {
+                "jsonPath": ".status.conditions[?(@.type==\"Denied\")].status",
+                "equals": "True"
+              }
+            ],
+            "status": "error",
+            "label": "Denied",
+            "reason": ".status.conditions[?(@.type==\"Denied\")].message"
+          },
+          {
+            "when": [
+              {
+                "jsonPath": ".status.failureTime",
+                "present": true
+              }
+            ],
+            "status": "error",
+            "label": "Failed",
+            "reason": ".status.conditions[?(@.type==\"Ready\")].message"
+          },
+          {
+            "when": [
+              {
+                "jsonPath": ".status.conditions[?(@.type==\"Ready\")].status",
+                "equals": "True"
+              }
+            ],
+            "status": "healthy",
+            "label": "Ready",
+            "reason": ".status.conditions[?(@.type==\"Ready\")].message"
+          },
+          {
+            "when": [
+              {
+                "jsonPath": ".status.conditions[?(@.type==\"Approved\")].status",
+                "equals": "True"
+              }
+            ],
+            "status": "progressing",
+            "label": "Pending",
+            "reason": ".status.conditions[?(@.type==\"Approved\")].message"
+          },
+          {
+            "when": [],
+            "status": "unknown",
+            "label": "Unknown"
+          }
+        ]
+      }
+    ],
+    "dashboardCards": [
+      {
+        "id": "expiring",
+        "title": "Certificates expiring soon",
+        "size": "s",
+        "type": "count",
+        "source": "certificates",
+        "predicate": {
+          "jsonPath": ".status.notAfter",
+          "within": "${settings.expiryWindow}"
+        },
+        "target": {
+          "page": "certificates"
+        }
+      }
+    ],
+    "detailTabs": [],
+    "detailLinks": []
+  }
+}

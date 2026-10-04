@@ -1,0 +1,5 @@
+{
+  "extensionId": "org.srelens.cert-manager",
+  "hostRepository": "https://github.com/srelens/srelens",
+  "hostRevision": "539aac7ff957e75777805235e67525f92d6b385c"
+}

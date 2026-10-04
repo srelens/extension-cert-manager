@@ -1,0 +1,25 @@
+name: Validate app
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - run: python3 -m unittest discover -s tests
+      - run: node --test tests/*.test.mjs
+      - name: Read tested host revision
+        id: host
+        run: python3 -c 'import json, os; open(os.environ["GITHUB_OUTPUT"], "a").write("revision=" + json.load(open("compatibility.json"))["hostRevision"] + "\n")'
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: srelens/srelens
+          ref: ${{ steps.host.outputs.revision }}
+          path: .host
+      - run: rustup toolchain install stable --profile minimal && rustup default stable
+      - run: python3 scripts/validate.py

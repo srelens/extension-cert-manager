@@ -1,0 +1,6 @@
+.host/
+dist/
+__pycache__/
+*.pyc
+*.pem
+!signing-public.pem

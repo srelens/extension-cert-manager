@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cert-manager-reference
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: self-signed
+  namespace: cert-manager-reference
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: reference-self-signed
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: soon
+  namespace: cert-manager-reference
+spec:
+  secretName: soon-tls
+  duration: 240h
+  commonName: soon.example.test
+  dnsNames: [soon.example.test]
+  issuerRef:
+    name: self-signed
+    kind: Issuer
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: later
+  namespace: cert-manager-reference
+spec:
+  secretName: later-tls
+  duration: 480h
+  commonName: later.example.test
+  dnsNames: [later.example.test]
+  issuerRef:
+    name: self-signed
+    kind: Issuer
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: far
+  namespace: cert-manager-reference
+spec:
+  secretName: far-tls
+  duration: 960h
+  commonName: far.example.test
+  dnsNames: [far.example.test]
+  issuerRef:
+    name: reference-self-signed
+    kind: ClusterIssuer
