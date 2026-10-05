@@ -14,6 +14,10 @@ class ReleaseTests(unittest.TestCase):
             root = Path(directory)
             (root / "scripts").mkdir()
             shutil.copy(ROOT / "scripts/package.py", root / "scripts/package.py")
+            for name in ["README.md", "LICENSE", "icons/icon.svg"]:
+                target = root / name
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(ROOT / name, target)
             raw = (ROOT / "manifest.json").read_bytes()
             (root / "manifest.json").write_bytes(raw)
             result = subprocess.run(["python3", str(root / "scripts/package.py"), "--version", version],
@@ -26,10 +30,10 @@ class ReleaseTests(unittest.TestCase):
             return result
 
     def test_packages_the_exact_release_bytes(self):
-        self.assertEqual(self.run_package("0.1.0").returncode, 0)
+        self.assertEqual(self.run_package(json.loads((ROOT / "manifest.json").read_text())["version"]).returncode, 0)
 
     def test_version_mismatch_produces_no_release(self):
-        result = self.run_package("0.2.0")
+        result = self.run_package("9999.0.0")
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("version", result.stderr.lower())
 

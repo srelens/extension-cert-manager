@@ -16,3 +16,9 @@ writeFileSync('dist/manifest.json.sig', JSON.stringify({
 }) + '\n');
 console.log('Signed and verified dist/manifest.json');
 
+
+const digests = readFileSync('dist/package/digests.json');
+const packageSignature = sign(null, digests, key);
+if (!verify(null, digests, trusted, packageSignature)) throw new Error('Package signature verification failed');
+writeFileSync('dist/package/digests.json.sig', packageSignature);
+console.log('Signed and verified dist/package/digests.json');

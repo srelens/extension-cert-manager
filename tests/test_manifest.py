@@ -32,9 +32,24 @@ class ManifestTests(unittest.TestCase):
                 self.assertEqual(binding["inputs"], ["context", "namespace"] if namespaced else ["context"])
 
     def test_all_resource_pages_have_their_own_reader(self):
-        pages = self.manifest["contributions"]["pages"]
+        pages = [p for p in self.manifest["contributions"]["pages"] if "dashboard" not in p]
         self.assertEqual({(p["id"], p["capability"]) for p in pages},
                          {(n, n) for n in ["certificates", "issuers", "clusterissuers", "certificaterequests"]})
+
+    def test_overview_is_the_entry_page_with_all_four_health_summaries(self):
+        page = self.manifest["contributions"]["pages"][0]
+        self.assertEqual(page["id"], "overview")
+        self.assertEqual(page["dashboard"]["pages"], ["certificates", "issuers", "clusterissuers", "certificaterequests"])
+        self.assertEqual(page["capability"], "certificates")
+
+    def test_upcoming_expirations_share_the_window_and_show_earliest_first(self):
+        cards = {c["id"]: c for c in self.manifest["contributions"]["dashboardCards"]}
+        upcoming = cards.get("upcoming")
+        self.assertIsNotNone(upcoming)
+        self.assertEqual(upcoming["source"], "certificates")
+        self.assertEqual(upcoming["predicate"], cards["expiring"]["predicate"])
+        self.assertEqual(upcoming["list"], {"jsonPath": ".status.notAfter", "order": "asc", "limit": 5})
+        self.assertEqual(upcoming["target"], {"page": "certificates"})
 
     def test_required_contribution_slots_are_present(self):
         for field in ["detailTabs", "detailLinks"]:

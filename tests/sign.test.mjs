@@ -13,11 +13,17 @@ function run(key, expected) {
     copyFileSync(new URL('../scripts/sign.mjs', import.meta.url), join(root, 'scripts/sign.mjs'));
     writeFileSync(join(root, 'signing-public.pem'), expected.publicKey.export({type:'spki',format:'pem'}));
     writeFileSync(join(root, 'dist/manifest.json'), '{"id":"org.srelens.cert-manager","version":"0.1.0"}\n');
+    mkdirSync(join(root, 'dist/package'));
+    writeFileSync(join(root, 'dist/package/digests.json'), '{"formatVersion":1,"files":[]}\n');
     const env = {...process.env};
     delete env.APP_SIGNING_PRIVATE_KEY;
     if (key) env.APP_SIGNING_PRIVATE_KEY = key.privateKey.export({type:'pkcs8',format:'pem'});
     const result = spawnSync(process.execPath, ['scripts/sign.mjs'], {cwd:root, env, encoding:'utf8'});
     if (result.status === 0) {
+      const packageSignature = readFileSync(join(root, 'dist/package/digests.json.sig'));
+      assert.equal(packageSignature.length, 64);
+      assert.equal(verify(null, readFileSync(join(root, 'dist/package/digests.json')), expected.publicKey, packageSignature), true);
+      assert.equal(verify(null, Buffer.from('modified digests'), expected.publicKey, packageSignature), false);
       const signature = JSON.parse(readFileSync(join(root,'dist/manifest.json.sig'),'utf8'));
       const publicDer = expected.publicKey.export({type:'spki',format:'der'});
       assert.equal(signature.keyid, createHash('sha256').update(publicDer.subarray(-32)).digest('hex'));

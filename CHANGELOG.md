@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.0
+
+Native Overview with certificate health, a configurable expiry-window count, upcoming expirations sorted earliest first, and issuer/request status.
+
+Signed `.srelens-extension` packages now include the official project logo,
+README and license, covered by the publisher signature and package checksum.
+Manifest releases remain available. Update an existing manifest installation
+to this version to install the packaged logo.
+
 ## 0.1.0
 
 Preview declarative app for srelens extension API 0.7.
