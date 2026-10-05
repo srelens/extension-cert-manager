@@ -29,9 +29,11 @@ is unavailable while Issuing is already True.
 
 ## Installation and access
 
-Catalog delivery requires a signed release and a reviewed catalog entry. Until
-that delivery is published, validate locally using the tested host below.
-Do not install an unsigned development copy under the reserved `org.srelens` ID.
+With a host supporting extension API `0.7`, open **Settings → Apps**, choose
+**cert-manager**, and review the requested permissions before installing.
+The catalog lists the signed [0.1.0 preview](https://github.com/srelens/extension-cert-manager/releases/tag/v0.1.0).
+For local development, validate with the tested host below; unsigned development
+copies must use an ID outside the reserved `org.srelens` namespace.
 
 The app requests exactly `k8s.listCustomResource` and `k8s.setStatusCondition`.
 Host discovery also needs access to CRD metadata. Kubernetes RBAC must allow:
